@@ -39,6 +39,8 @@ RUN R -e "install.packages(c('xml2', 'roxygen2', 'rversions', 'devtools', 'tidyv
     R -e "devtools::install_github('meichendong/SCDC')" && \
     R -e "install.packages('BisqueRNA')"
 
+COPY docker_files/gep /gep
+
 COPY docker_files/bescape.py docker_files/_helper_deconv.py docker_files/musicpy.py docker_files/script_music.R docker_files/epicpy.py docker_files/epicpy_ref.py docker_files/SCDC_tkt_simplified.Rmd docker_files/scdcpy.py docker_files/render_scdc.R docker_files/epic.R ./
 
 # Make script executable
@@ -52,4 +54,5 @@ RUN chmod a+x bescape.py && \
     chmod a+x render_scdc.R
 
 # Make Docker container executable
-CMD ["python", "/app/bescape.py"]
+CMD ["python", "/app/scdcpy.py"]
+CMD [ "python3", "/app/scdcpy.py", "--celltypevar", "celltypevar",  "--samplevar", "samplevar", "--celltypesel", "celltypesel"]
