@@ -32,18 +32,15 @@ do_scdc <- function(expression_path, dataset_name){
         tibble::column_to_rownames("Gene") %>% 
         as.matrix() 
     
-    # scdc deconvolution
-    result_matrix <- MCPcounter::MCPcounter.estimate(
-        expression_matrix,
-        probesets = probesets,
-        genes = genes,
-        featuresType = 'HUGO_symbols')
+    # scdc deconvolution - doesnt need to run, just need to make sure the bulk.eset is in the correct format
+    result_matrix <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata, ct.varname = params$celltypevar, sample = params$samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
     
     # Convert the result matrix back to a dataframe
     result_df <- result_matrix %>% 
         as.data.frame() %>% 
         tibble::rownames_to_column("mcpcounter.cell.type") %>% 
         dplyr::as_tibble()
+    result_df <- SCDC
     
     # Stack the predictions into one column
     result_df <- tidyr::gather(
