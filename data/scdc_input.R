@@ -1,9 +1,10 @@
-library(dplyr)
-library(readr)
-library(purrr)
-library(magrittr)
-library(tibble)
-library(tidyr)
+library(tidyverse)
+#library(dplyr)
+#library(readr)
+#library(purrr)
+#library(magrittr)
+#library(tibble)
+#library(tidyr)
 
 library(SCDC)
 
@@ -11,10 +12,17 @@ library(SCDC)
 ## listing each of the datasets
 
 #Declare parameters needed for scdc(TODO)
-#scdata
-#celltypevar
-#samplevar
-#celltypesel
+scfilelist <- c('./gep/martin_eset.RDS', './gep/brca_eset.RDS')
+
+celltypevar = 'cellType' #variable name containing the cell type annot in @phenoData of the eset
+samplevar = 'SubjectName' # variable name in @phenoData@data$... identifying sample name
+celltypesel = c('memory.B.cells','naive.B.cells','memory.CD4.T.cells','naive.CD4.T.cells','regulatory.T.cells','memory.CD8.T.cells','naive.CD8.T.cells','NK.cells','neutrophils','monocytes','myeloid.dendritic.cells','macrophages','fibroblasts','endothelial.cells')
+
+# intersecting set: BRCA x Martin
+#celltypesel = c('NK.cells','endothelial.cells','fibroblasts','macrophages','memory.B.cells','memory.CD4.T.cells','memory.CD8.T.cells','myeloid.dendritic.cells','naive.B.cells','naive.CD4.T.cells','naive.CD8.T.cells','regulatory.T.cells')
+
+# intersecting set: BRCA x Smille
+#celltypesel = c('NK.cells','endothelial.cells','fibroblasts','macrophages','memory.CD4.T.cells','memory.CD8.T.cells','monocytes','myeloid.dendritic.cells','others','regulatory.T.cells')
 
 input_df <- readr::read_csv("./input/input.csv")
 
@@ -27,6 +35,14 @@ expression_files  <- input_df$hugo.expr.file
 
 ## Form the paths of the expression files
 expression_paths <- paste0("./input/", expression_files)
+
+## Load sc datasets: martin and brca
+scdata = list(0)
+nscdata<-length(scfilelist)
+for(index in 1:nscdata){
+scdata[[index]]<-readRDS(scfilelist[index])
+}
+
 
 do_scdc <- function(expression_path, dataset_name){
     
@@ -48,7 +64,10 @@ do_scdc <- function(expression_path, dataset_name){
     bulk<-Biobase::ExpressionSet(assayData=expression_matrix,phenoData=phenoData)#no phenotype data available
     
     # scdc deconvolution - doesnt need to run, just need to make sure the bulk.eset is in the correct format
-    result_matrix <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata, ct.varname = params$celltypevar, sample = params$samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
+    ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
+
+    # actually select best sc-dataset for each sample
+    result_matrix <-  as.data.frame(wt_prop(ens$w_table[1, 1:2], ens$prop.only))
     
     #For missing celltypes: Run based on intercept of cell types across scRNASeq datasets and correct
     recalib<-function(resultmat,cells_zero,cell_sum,cells_add){
