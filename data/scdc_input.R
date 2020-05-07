@@ -12,7 +12,7 @@ library(SCDC)
 ## listing each of the datasets
 
 #Declare parameters needed for scdc(TODO)
-scfilelist <- c('./gep/martin_eset.RDS', './gep/brca_eset.RDS')
+scfilelist <- c('./gep/martin_eset_geo.RDS', './gep/brca_eset_geo.RDS')
 
 celltypevar = 'cellType' #variable name containing the cell type annot in @phenoData of the eset
 samplevar = 'SubjectName' # variable name in @phenoData@data$... identifying sample name
@@ -30,8 +30,8 @@ input_df <- readr::read_csv("./input/input.csv")
 dataset_names <- input_df$dataset.name
 
 ## Extract the names of the expression files that use 
-## Hugo symbols as gene identifiers
-expression_files  <- input_df$hugo.expr.file
+## ENSG symbols as gene identifiers
+expression_files  <- input_df$ensg.expr.file
 
 ## Form the paths of the expression files
 expression_paths <- paste0("./input/", expression_files)
