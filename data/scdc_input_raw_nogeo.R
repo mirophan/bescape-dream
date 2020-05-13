@@ -46,37 +46,6 @@ for(index in 1:nscdata){
 scdata[[index]]<-readRDS(scfilelist[index])
 }
 
-#####################################################
-#Hard coded to modify eset to match old ones (TKT)
-#####################################################
-baron<-readRDS('../docs/datasets/scdc/gep/baron_sc.rds')
-#add features data--> use featureNames(exampleSet)
-scdata[[1]]@featureData@data$GeneID <- baron@featureData@data$colnames[1:dim(scdata[[1]])[1]]
-scdata[[2]]@featureData@data$GeneID <- baron@featureData@data$colnames[1:dim(scdata[[2]])[1]]
-
-featureNames(scdata[[1]])<-baron@featureData@data$colnames[1:dim(scdata[[1]])[1]]
-
-#change sample to patient id(please note that this should reflect just the number of donors)
-scdata[[1]]@phenoData@data$barcode<-scdata[[1]]@phenoData@data$SubjectName
-scdata[[1]]@phenoData@data$sample<-rep(c('h1','h2','h3','h4'),each=1000)
-
-scdata[[2]]@phenoData@data$barcode<-scdata[[2]]@phenoData@data$SubjectName
-scdata[[2]]@phenoData@data$sample<-rep(c('h1','h2','h3','h4'),each=1000)
-
-#assign cluster to just characters
-scdata[[1]]@phenoData@data$cluster<-as.character(scdata[[1]]@phenoData@data$cellType)
-scdata[[2]]@phenoData@data$cluster<-as.character(scdata[[2]]@phenoData@data$cellType)
-
-
-#update vardata
-varMetadata(scdata[[1]])<-data.frame(labelDescription=colnames(scdata[[1]]@phenoData@data),stringsAsFactors=FALSE)
-varMetadata(scdata[[2]])<-data.frame(labelDescription=colnames(scdata[[2]]@phenoData@data),stringsAsFactors=FALSE)
-
-scdata[[1]]@featureData@varMetadata<-data.frame(labelDescription="GeneID",stringsAsFactors=FALSE)
-scdata[[2]]@featureData@varMetadata<-data.frame(labelDescription="GeneID",stringsAsFactors=FALSE)
-
-rownames(scdata[[1]]@featureData@varMetadata)<-"GeneID"
-rownames(scdata[[2]]@featureData@varMetadata)<-"GeneID"
 
 do_scdc <- function(expression_path, dataset_name){
     
