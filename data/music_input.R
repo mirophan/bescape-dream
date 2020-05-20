@@ -16,7 +16,7 @@ library(xbioc)
 #scfilelist <- c('../docs/datasets/scdc/gep/baron_sc.rds', '../docs/datasets/scdc/gep/segerstolpe_eset.rds')
 #scfilelist <- c('./gep/martin_raw_eset_geo.RDS', './gep/brca_raw_eset_geo.RDS')
 
-sc.crc<- readRDS('./gep/crc_tumor_eset.RDS')
+sc.crc<- readRDS('../unfiltered_data/crc_tumor_eset.RDS')
 
 celltypevar = 'cluster' #variable name containing the cell type annot in @phenoData of the eset
 samplevar = 'SubjectName' # variable name in @phenoData@data$... identifying sample name
@@ -26,7 +26,7 @@ samplevar = 'SubjectName' # variable name in @phenoData@data$... identifying sam
 #celltypesel = c('NK.cells','endothelial.cells','fibroblasts','macrophages','memory.B.cells','memory.CD4.T.cells','memory.CD8.T.cells','myeloid.dendritic.cells','naive.B.cells','naive.CD4.T.cells','naive.CD8.T.cells','regulatory.T.cells')
 
 #Union of cells in DREAM (the last celltypes are missing in one of the datasets)
-celltypesel = c('NK.cells','endothelial.cells','fibroblasts','macrophages','memory.B.cells','memory.CD4.T.cells','memory.CD8.T.cells','myeloid.dendritic.cells','naive.B.cells','naive.CD4.T.cells','naive.CD8.T.cells','regulatory.T.cells',"monocytes","neutrophils")
+celltypesel = c('NK.cells','endothelial.cells','fibroblasts','macrophages','memory.B.cells','memory.CD4.T.cells','memory.CD8.T.cells','myeloid.dendritic.cells','naive.B.cells','naive.CD4.T.cells','naive.CD8.T.cells','regulatory.T.cells')
 
 # intersecting set: BRCA x Smille
 #celltypesel = c('NK.cells','endothelial.cells','fibroblasts','macrophages','memory.CD4.T.cells','memory.CD8.T.cells','monocytes','myeloid.dendritic.cells','others','regulatory.T.cells')
@@ -58,17 +58,24 @@ do_scdc <- function(expression_path, dataset_name){
 
     #creating phenoData with just sample ID (TKT)
     pData<-as.data.frame(colnames(expression_matrix))
-    colnames(pData)<-"sample"
-    metadata<-data.frame(labelDescription=c("sample"),row.names=c("sample"))
+    colnames(pData)<-"sampleID"
+    metadata<-data.frame(labelDescription=c("sampleID"),row.names=c("sampleID"))
     phenoData<-new("AnnotatedDataFrame",data=pData,varMetadata=metadata)
     row.names(phenoData)<-colnames(expression_matrix)
 
+        
     bulk<-Biobase::ExpressionSet(assayData=expression_matrix,phenoData=phenoData)#no phenotype data available
+
+    ##TKT Massive hack
+    GSE50244.eset<-readRDS("~/Music/GSE50244bulkeset.rds")
+    bulk@phenoData@varMetadata<-GSE50244.eset@phenoData@varMetadata
+    bulk@phenoData@data$SubjectName<-GSE50244.eset@phenoData$data[1:dim(bulk)[2],]
+    ###
     
     # scdc deconvolution - doesnt need to run, just need to make sure the bulk.eset is in the correct format
     #ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
 
-    out.prop <- music_prop(bulk.eset = bulk, sc.eset = sc.crc, clusters = 'cluster', samples='SubjectName')
+    out.prop <- music_prop(bulk.eset = bulk, sc.eset = sc.crc, clusters = 'cluster', samples='SubjectName',select.ct=celltypesel)
     out.frac <- out.prop$Est.prop.weighted
 #    ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
 
