@@ -15,8 +15,7 @@ library(SCDC)
 #Declare parameters needed for scdc(TODO)
 #scfilelist <- c('../docs/datasets/scdc/gep/baron_sc.rds', '../docs/datasets/scdc/gep/segerstolpe_eset.rds')
 #scfilelist <- c('./gep/martin_raw_eset_geo.RDS', './gep/brca_raw_eset_geo.RDS')
-scfilelist <- c('../unfiltered_data/martin_raw_eset.RDS',
-                '../unfiltered_data/brca_tumor_eset.RDS',
+scfilelist <- c('../unfiltered_data/brca_tumor_eset.RDS',
                 '../unfiltered_data/crc_tumor_eset.RDS')
 
 celltypevar = 'cluster' #variable name containing the cell type annot in @phenoData of the eset
