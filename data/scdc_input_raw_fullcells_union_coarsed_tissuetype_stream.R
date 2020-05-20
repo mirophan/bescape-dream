@@ -89,6 +89,7 @@ do_scdc <- function(expression_path, dataset_name, indication){
             t$monocytes<-0}   
         if(!("neutrophils" %in% colnames(t))){
             t$neutrophils<-0}
+    ens$prop.est<-as.matrix(t)
     rm(t)
     }
 
