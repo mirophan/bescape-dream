@@ -137,6 +137,6 @@ combined_result_df <- dplyr::bind_rows(result_dfs)
 
 
 ## Write result into output directory
-readr::write_csv(combined_result_df, "output/predictions_unionCells_ds1ds2_coarsed_tissueType_stream.csv")
+write_csv(combined_result_df, "output/predictions_unionCells_ds1ds2_coarsed_tissueType_stream.csv")
 
     
