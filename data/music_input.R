@@ -67,9 +67,9 @@ do_scdc <- function(expression_path, dataset_name){
     bulk<-Biobase::ExpressionSet(assayData=expression_matrix,phenoData=phenoData)#no phenotype data available
 
     ##TKT Massive hack
-    GSE50244.eset<-readRDS("~/Music/GSE50244bulkeset.rds")
-    bulk@phenoData@varMetadata<-GSE50244.eset@phenoData@varMetadata
-    bulk@phenoData@data$SubjectName<-GSE50244.eset@phenoData$data[1:dim(bulk)[2],]
+    #GSE50244.eset<-readRDS("~/Music/GSE50244bulkeset.rds")
+    #bulk@phenoData@varMetadata<-GSE50244.eset@phenoData@varMetadata
+    #bulk@phenoData@data$SubjectName<-GSE50244.eset@phenoData$data[1:dim(bulk)[2],]
     ###
     
     # scdc deconvolution - doesnt need to run, just need to make sure the bulk.eset is in the correct format
