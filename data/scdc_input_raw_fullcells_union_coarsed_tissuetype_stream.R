@@ -134,7 +134,7 @@ result_dfs <- purrr::pmap(list(expression_paths, dataset_names, indications), do
 
 ## Combine all results into one dataframe
 combined_result_df <- dplyr::bind_rows(result_dfs)
-
+combined_result_df$sample.id<-paste0("Sample_",combined_result_df$sample.id)
 
 ## Write result into output directory
 write_csv(combined_result_df, "output/predictions_unionCells_ds1ds2_coarsed_tissueType_stream.csv")
