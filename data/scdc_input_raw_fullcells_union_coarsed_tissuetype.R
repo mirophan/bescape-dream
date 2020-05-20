@@ -16,10 +16,11 @@ library(SCDC)
 #scfilelist <- c('../docs/datasets/scdc/gep/baron_sc.rds', '../docs/datasets/scdc/gep/segerstolpe_eset.rds')
 #scfilelist <- c('./gep/martin_raw_eset_geo.RDS', './gep/brca_raw_eset_geo.RDS')
 scfilelist <- c('../unfiltered_data/brca_tumor_eset.RDS',
-                '../unfiltered_data/crc_tumor_eset_update.RDS')
-sc.brca <- c('../unfiltered_data/brca_tumor_eset.RDS')
-sc.crc <- c('../unfiltered_data/crc_tumor_eset_update.RDS',
-           '../unfiltered_data/martin_raw_eset.RDS')
+                '../unfiltered_data/crc_tumor_eset_update.RDS',
+                '../unfiltered_data/martin_raw_eset.RDS') #TKT: please don't change the order
+crcindex<-c(2,3)
+brcaindex<-1
+
 celltypevar = 'cluster' #variable name containing the cell type annot in @phenoData of the eset
 samplevar = 'SubjectName' # variable name in @phenoData@data$... identifying sample name
 #celltypesel = c('alpha','beta','delta','gamma','acinar','ductal')
@@ -53,17 +54,7 @@ for(index in 1:nscdata){
 scdata_all[[index]]<-readRDS(scfilelist[index])
 }
 
-scdata_crc = list(0)
-nscdata<-length(sc.crc)
-for(index in 1:nscdata){
-scdata_crc[[index]]<-readRDS(sc.crc[index])
-}
 
-scdata_brca = list(0)
-nscdata<-length(sc.brca)
-for(index in 1:nscdata){
-scdata_brca[[index]]<-readRDS(sc.brca[index])
-}
 
 
 do_scdc <- function(expression_path, dataset_name, indication){
@@ -89,30 +80,33 @@ do_scdc <- function(expression_path, dataset_name, indication){
     #ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
 
     if(indication=="CRC"){
-        ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata_crc, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
+        ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata_all[c(2,3)], ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T) #TKT: order is defined, please don't change the order, i.e. list 2 and 3 are CRC and Martin respectively
     } else if(indication=="BRCA"){
-        ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata_brca, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
+        ens <- SCDC_prop(bulk.eset = bulk, sc.eset = scdata_all[[1]], ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
     } else {
         ens <- SCDC_ENSEMBLE(bulk.eset = bulk, sc.eset.list = scdata_all, ct.varname = celltypevar, sample = samplevar, truep = NULL, ct.sub =  celltypesel, search.length = 0.01, grid.search = T)
     }
     
 
     #hack on sc datasets with missing cell types. must be appended at the end and follow the order of the celltype list
-    for(index in 1:nscdata){
+    if(indication=="CRC"){
+    for(index in 1:2){
         t<-as.data.frame(ens$prop.only[[index]],rownames=TRUE)
         if(!("monocytes" %in% colnames(t))){
             t$monocytes<-0}   
         if(!("neutrophils" %in% colnames(t))){
             t$neutrophils<-0}
         ens$prop.only[[index]]<-as.matrix(t)
-        rm(t)
+        rm(t)}
     }
 
-    if(indication=="CRC" || indication == "BRCA"){
-        result_matrix <-  as.data.frame(wt_prop(ens$w_table[1, 1:nscdata], ens$prop.only))
+    if(indication=="CRC"){
+        result_matrix <-  as.data.frame(wt_prop(ens$w_table[1, 1:2], ens$prop.only)) #only take 2 scRNAseq
+    } else if(indication == "BRCA") {
+        result_matrix <-  as.data.frame(ens$prop.est) #No ensemble
     } else {
-        result_matrix <-  as.data.frame(ens$prop.est)
-    }
+        result_matrix <-  as.data.frame(wt_prop(ens$w_table[1, 1:nscdata], ens$prop.only))
+    } #ensemble with 3 RNASeq
     
     
     
@@ -141,19 +135,20 @@ do_scdc <- function(expression_path, dataset_name, indication){
     result_df_wide$sample.id<-as.factor(result_df_wide$sample.id)
     result_df <- tidyr::gather(result_df_wide,cell.type,prediction,-sample.id,factor_key= TRUE) 
     
-    
+    gc()
     # Add dataset column
     result_df <- dplyr::mutate(result_df, dataset.name = dataset_name)
+   
 }
 
 ## Run MCP-Counter on each of the expression files
-result_dfs <- purrr::map2(expression_paths, dataset_names, indications, do_scdc) 
+result_dfs <- purrr::pmap(list(expression_paths, dataset_names, indications), do_scdc) #map2 only takes 2 arguments 
 
 ## Combine all results into one dataframe
 combined_result_df <- dplyr::bind_rows(result_dfs)
 
 
 ## Write result into output directory
-readr::write_csv(combined_result_df, "output/predictions_unionCells_ds1ds2_coarsed_no_martin.csv")
+readr::write_csv(combined_result_df, "output/predictions_unionCells_ds1ds2_coarsed_wMartin_tissueType.csv")
 
     
